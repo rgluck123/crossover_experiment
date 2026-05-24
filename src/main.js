@@ -33,6 +33,9 @@ const texts = [
   }
 ];
 
+// Set your Google Apps Script Web App URL here to automate data collection
+const GOOGLE_SHEET_URL = ''; 
+
 let state = {
   participantId: '',
   tasks: [],
@@ -42,7 +45,8 @@ let state = {
   selectedWords: new Set(),
   startTime: 0,
   timerInterval: null,
-  timeLeft: 30
+  timeLeft: 30,
+  uploadStatus: 'idle' // idle, uploading, success, error
 };
 
 function render() {
@@ -104,12 +108,17 @@ function render() {
     });
     document.querySelector('#submit-test-btn').onclick = submitTest;
   } else if (state.currentStep === 'finish') {
+    let statusMsg = '';
+    if (state.uploadStatus === 'uploading') statusMsg = 'Saving results...';
+    else if (state.uploadStatus === 'success') statusMsg = 'Results saved automatically.';
+    else if (state.uploadStatus === 'error') statusMsg = 'Auto-save failed. Use the manual download below.';
+
     container.innerHTML = `
       <h1>Experiment Completed</h1>
       <p>Thank you for your participation!</p>
-      <p>Please call the researcher to collect your results.</p>
+      <p style="color: #888; font-size: 0.9rem;">${statusMsg}</p>
       <br>
-      <button id="download-btn">Download Results (CSV for Excel)</button>
+      <button id="download-btn">Manual Download (CSV)</button>
       <button id="restart-btn" style="margin-left: 1rem;">Restart</button>
     `;
     app.appendChild(container);
@@ -119,6 +128,41 @@ function render() {
       render();
     };
   }
+}
+
+async function sendToGoogleSheet() {
+  if (!GOOGLE_SHEET_URL) return;
+
+  state.uploadStatus = 'uploading';
+  render();
+
+  try {
+    for (const r of state.results) {
+      const data = {
+        ParticipantID: state.participantId,
+        Timestamp: new Date().toISOString(),
+        TextID: r.textId,
+        Title: r.textTitle,
+        Font: r.font,
+        ReadTime_s: r.readTime,
+        Score: r.score,
+        TotalPossible: r.totalPossible,
+        SelectedWords: r.selected
+      };
+
+      await fetch(GOOGLE_SHEET_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+    }
+    state.uploadStatus = 'success';
+  } catch (err) {
+    console.error('Upload failed:', err);
+    state.uploadStatus = 'error';
+  }
+  render();
 }
 
 function resetState() {
@@ -131,16 +175,12 @@ function resetState() {
     selectedWords: new Set(),
     startTime: 0,
     timerInterval: null,
-    timeLeft: 30
+    timeLeft: 30,
+    uploadStatus: 'idle'
   };
 }
 
 function startExperiment() {
-  // Randomization explanation:
-  // 1. Randomly decide which text (Railway or Stamps) comes first.
-  // 2. Randomly decide which font (Times or Aptos) is used for the first text.
-  // 3. The second text automatically gets the other font (crossover design).
-  
   const textOrder = Math.random() < 0.5 ? [0, 1] : [1, 0];
   const fontOrder = Math.random() < 0.5 ? ['Times New Roman', 'Aptos'] : ['Aptos', 'Times New Roman'];
   
@@ -210,10 +250,12 @@ function submitTest() {
   if (state.currentTaskIndex < state.tasks.length - 1) {
     state.currentTaskIndex++;
     state.currentStep = 'instructions';
+    render();
   } else {
     state.currentStep = 'finish';
+    render();
+    sendToGoogleSheet();
   }
-  render();
 }
 
 function downloadResultsCSV() {
