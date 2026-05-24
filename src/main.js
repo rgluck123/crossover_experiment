@@ -116,8 +116,7 @@ function render() {
     container.innerHTML = `
       <h1>Experiment Completed</h1>
       <p>Thank you for your participation!</p>
-      <p style="color: #888; font-size: 0.9rem;">${statusMsg}</p>
-      <br>
+      <p style="color: #888; font-size: 0.9rem; margin-bottom: 2rem;">${statusMsg}</p>
       <button id="download-btn">Manual Download (CSV)</button>
       <button id="restart-btn" style="margin-left: 1rem;">Restart</button>
     `;
