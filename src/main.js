@@ -165,8 +165,13 @@ async function sendToGoogleSheet() {
 }
 
 function resetState() {
+  // Get last ID from localStorage or start at 0
+  let lastId = parseInt(localStorage.getItem('last_participant_id') || '0');
+  let nextId = lastId + 1;
+  localStorage.setItem('last_participant_id', nextId.toString());
+
   state = {
-    participantId: 'P' + Math.floor(Math.random() * 1000000),
+    participantId: nextId.toString(),
     tasks: [],
     currentStep: 'intro',
     currentTaskIndex: 0,
