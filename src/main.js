@@ -34,7 +34,7 @@ const texts = [
 ];
 
 // Set your Google Apps Script Web App URL here to automate data collection
-const GOOGLE_SHEET_URL = ''; 
+const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbxaUFk5URNWzHl9RsqxHwb8KE1RatcWER_4WNEVjLdVWfq-8CIkMo9ToWQ11R8VI7HzqQ/exec'; 
 
 let state = {
   participantId: '',
