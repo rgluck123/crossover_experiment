@@ -111,21 +111,22 @@ function render() {
     let statusMsg = '';
     if (state.uploadStatus === 'uploading') statusMsg = 'Saving results...';
     else if (state.uploadStatus === 'success') statusMsg = 'Results saved automatically.';
-    else if (state.uploadStatus === 'error') statusMsg = 'Auto-save failed. Use the manual download below.';
+    else if (state.uploadStatus === 'error') statusMsg = 'Auto-save failed. Data will be recovered on next session.';
 
     container.innerHTML = `
       <h1>Experiment Completed</h1>
       <p>Thank you for your participation!</p>
-      <p style="color: #888; font-size: 0.9rem; margin-bottom: 2rem;">${statusMsg}</p>
-      <button id="download-btn">Manual Download (CSV)</button>
-      <button id="restart-btn" style="margin-left: 1rem;">Restart</button>
+      <p style="color: #888; font-size: 0.9rem; margin-top: 2rem;">${statusMsg}</p>
     `;
     app.appendChild(container);
-    document.querySelector('#download-btn').onclick = downloadResultsCSV;
-    document.querySelector('#restart-btn').onclick = () => {
-      resetState();
-      render();
-    };
+
+    // Auto-restart after 5 seconds
+    setTimeout(() => {
+      if (state.currentStep === 'finish') {
+        resetState();
+        render();
+      }
+    }, 5000);
   }
 }
 
